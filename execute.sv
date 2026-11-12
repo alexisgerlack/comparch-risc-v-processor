@@ -1,10 +1,11 @@
 module execute(
     input logic clk,
-    input logic [6:0]instruction
+    input logic [31:0]instruction
 );
     //declare all opcodes
     localparam logic R_TYPEX = 7'b0110111; //look at funct7/3 for operations
     localparam logic R_TYPEY = 7'b0111011; //look at funct7/3
+    localparam logic R_TYPEZ = 7'b1010011;
     //i type
     localparam logic I_TYPEX = 7'b0000011; // look at funct3
     localparam logic I_TYPEY = 7'b0010011; // look at funct3
@@ -67,15 +68,8 @@ module execute(
     localparam logic BLTU    = 3'b110;//branch if less than unsigned
     localparam logic BGEU    = 3'b111;//branch if greater than or equal to unsigned
 
-
-
-    //break down instruction btw this is not right for all instructions but is a placeholder
+    //save opcode
     wire [6:0] opcode = instruction[6:0];
-    wire [4:0] rd     = instruction[11:7];
-    wire [2:0] funct3 = instruction[14:12];
-    wire [4:0] rs1    = instruction[19:15];
-    wire [4:0] rs2    = instruction[24:20];
-    wire [6:0] funct7 = instruction[31:25];
 
     //initializing program counter
     logic pc = 7'b0;
@@ -84,35 +78,24 @@ module execute(
     //check for opcode
     always_comb begin
         case(opcode)
-            R_TYPE: pc = (rs1 <) ? BTA
-            BLTZ:
-            J:
-            JAL:
-            BEQ:
-            BNE:
-            BLEZ:
-            BGTZ:
-            ADDI:
-            ADDIU:
-            SLTI:
-            SLTIU:
-            ANDI:
-            ORI:
-            XORI:
+            R_TYPEX:
+            R_TYPEY:
+            R_TYPEZ:
+    //i type
+            I_TYPEX:
+            I_TYPEY:
+            JALR:
+            LWX:
+            SHIFTX:
+    //u type
+            ADDUI:
             LUI:
-            MTC0:
-            BCLF:
-            LB:
-            F_TYPE:
-            LH:
-            LW:
-            LBU:
-            LHU:
-            SB:
-            SH:
-            SW:
-            LWCL:
-            SWCL:
+    //s type
+            S_TYPE:
+    //b type
+            B_TYPE:
+    //j type
+            JAL:
 
             default: error = true;
         endcase
