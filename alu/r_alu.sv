@@ -9,9 +9,8 @@ module r_alu(
     wire [4:0] rs2 = instruction[24:20];
     wire [4:0] funct7 = instruction[31:25];
 
-    localparam logic RX    = 7'b0111011;
-    localparam logic RY    = 7'b0110011;
-    localparam logic RZ    = 7'b1010011;
+    localparam logic RX    = 7'b0110011;
+    localparam logic RY    = 7'b0111011;
 
     localparam logic ASX     = 3'b000;//look at funct 7 or ADD SUB
     localparam logic SLL     = 3'b001;//shift left logical or logical word
@@ -46,18 +45,9 @@ module r_alu(
                 ASX: rd = (funct7 == O) ? SignExt(rs1+rs2) : SignExt(rs1-rs2); //addw subw
                 SLL: rd = SignExt(rs1 << rs2);
                 SRX: rd = (funct7 == O) ?  SignExt(rs1 >> rs2) : SignExt(rs1 <<< rs2);
-                default: error = 1'b1;
+                default: error = 1'b1; //there are some missed in here. I am quite confused about them so ASK
             endcase
         }
-        if (opcode == RZ){
-            case(funct3)
-                ASX: fd = (funct7[4:0] == 5'b00100); //this one confuses me there are commas in the operation table
-                SLL: fd = (funct7[4:0] == 5'b00100); //same as above
-                SLT: fd = (funct7 == O) ?  SignExt(rs1 >> rs2) : SignExt(rs1 <<< rs2);
-                default: error = 1'b1;
-            endcase
-        }
-
     end
 
 endmodule
