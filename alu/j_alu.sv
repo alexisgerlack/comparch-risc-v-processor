@@ -6,16 +6,18 @@ module j_alu(
     output logic [31:0] rd,
     output logic [31:0] is_jal
 );
-    //opcode
-    localparam logic [6:0] JAL = 7'b1101111;
-
+    //initalizing opcode and immediate variables
     logic [6:0]  opcode;
     logic [31:0] imm_j;
 
+    //opcode for JAL
+    localparam logic [6:0] J = 7'b1101111;
+
+    //instruction formatting
     assign opcode = instruction[6:0];
     assign rd = instruction[11:7];
 
-    //the only j-type instruction is jal
+    //the only j-type instruction is jal so we can assume it is that
     assign imm_j = {{11{instruction[31]}},
                     instruction[31],
                     instruction[19:12],
@@ -25,6 +27,6 @@ module j_alu(
 
     assign jta = pc + imm_j;
     assign link = pc + 32'd4;
-    assign is_jal = (opcode == JAL);
+    assign is_jal = (opcode == J);
 
 endmodule
