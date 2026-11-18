@@ -3,7 +3,7 @@ module s_alu(
     input logic  [31:0] instruction,
     output logic [31:0] addr,
     output logic [2:0] store_byte,
-    output logic is_store
+    output logic is_s
 );
     //opcode for s-type
     localparam logic [6:0] S = 7'b0100011;
@@ -15,7 +15,6 @@ module s_alu(
     logic [6:0]  opcode;
     logic [31:0] imm_s;
     logic [2:0]  funct3;
-    logic [0:0] error = 1'b0;
 
     //assigning opcode & funct3 to logic statements
     assign opcode = instruction[6:0];
@@ -28,7 +27,7 @@ module s_alu(
 
     //assigning adress to have rs2 stored in
     assign addr = rs1_data + imm_s;
-    assign is_store = (opcode == S);
+    assign is_s = (opcode == S);
 
     //this helps tell us how many bytes are stored
     always_comb begin
@@ -36,7 +35,6 @@ module s_alu(
             SB: store_byte = 3'b001;
             SH: store_byte = 3'b010;
             SW: store_byte = 3'b100;
-            default: error = 1'b1;
         endcase
     end
 

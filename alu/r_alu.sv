@@ -27,7 +27,7 @@ module r_alu(
     logic error = 1'b0;
 
     always_comb begin
-        if (opcode == RX){
+        if (opcode == RX) begin
             case(funct3)
                 ASX:  rd = (funct7 == O) ? rs1 + rs2 : rs1 - rs2;
                 SLL: rd = rs1 << rs2;
@@ -39,15 +39,15 @@ module r_alu(
                 AND: rd = rs1 & rs2;
                 default: error = 1'b1;
             endcase
-        }
-        if (opcode == RY){
+        end
+        if (opcode == RY) begin
             case(funct3)
                 ASX: rd = (funct7 == O) ? SignExt(rs1+rs2) : SignExt(rs1-rs2); //addw subw
                 SLL: rd = SignExt(rs1 << rs2);
                 SRX: rd = (funct7 == O) ?  SignExt(rs1 >> rs2) : SignExt(rs1 <<< rs2);
                 default: error = 1'b1; //there are some missed in here. I am quite confused about them so ASK
             endcase
-        }
+        end
     end
 
 endmodule
