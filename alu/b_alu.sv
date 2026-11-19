@@ -1,47 +1,52 @@
 module b_alu(
-    input logic [31:0]instruction,
-    input logic pc,
-    output logic pc,
+    input logic [31:0] pc,
+    input logic [31:0] instruction,
+    input logic [31:0] rs1_data, //register
+    input logic [31:0] rs2_data, //register
+    output logic [31:0] next_pc,
     output logic is_b
 );
-    //b opcode
-    localparam logic [6:0] B = 7'b1100011;
+    //Declaring constants
+    //opcode
+    localparam logic [6:0] B      = 7'b1100011;
     //funct3
-    localparam logic BEQ    = 3'b000;
-    localparam logic BNE    = 3'b001;
-    localparam logic BLT    = 3'b100;
-    localparam logic BGE    = 3'b101;
-    localparam logic BLTU   = 3'b110;
-    localparam logic BGEU   = 3'b111;
-    //error boolean
-    logic error = 1'b0;
-    //instruction format
-    logic [6:0] opcode;
-    logic [4:0] funct3;
-    logic [4:0] rs1;
-    logic [4:0] rs2;
-    logic [4:0] imm12;
+    localparam logic [2:0] BEQ    = 3'b000;
+    localparam logic [2:0] BNE    = 3'b001;
+    localparam logic [2:0] BLT    = 3'b100;
+    localparam logic [2:0] BGE    = 3'b101;
+    localparam logic [2:0] BLTU   = 3'b110;
+    localparam logic [2:0] BGEU   = 3'b111;
 
-    //assigning instruction format
+    //Declaring vars
+    logic [6:0]  opcode;
+    logic [2:0]  funct3;
+    logic [31:0] imm12;
+    logic [31:0] bta;
+
+    //assigning vars
     assign opcode = instruction[6:0];
     assign funct3 = instruction[14:12];
-    assign rs1 = instruction[19:15];
-    assign rs2 = instruction[24:20];
-    assign imm12 = instruction[31:25];
-    //there is only one b opcode the sign ext is wrong
-    assign bta = pc + SignExt({imm12, 1'b0});
-    assign is_b = (opcode == B);
+
+    //there is only one b opcode
+    assign bta =    pc + imm12;
+    assign is_b =   (opcode == B);
+
+    //assigning immediate
+    assign imm12 = {{19{instruction[31]}}, instruction[31], instruction[7],
+        instruction[30:25], instruction[11:8], 1'b0};
 
     //checking type of b
     always_comb begin
-        case(funct3)
-            BEQ: pc = (rs1 == rs2) ? bta : pc;
-            BNE: pc = (rs1 != rs2) ? bta : pc;
-            BLT: pc = (rs1 < rs2) ? bta : pc;
-            BGE: pc = (rs1 >= rs2) ? bta : pc;
-            BLTU: pc = (rs1 < rs2) ? bta : pc;
-            BGEU: pc = (rs1 >= rs2) ? bta : pc;
-            default: error = 1'b1;
-        endcase
+        if(is_b) begin
+            case(funct3)
+                BEQ:     next_pc = (rs1_data == rs2_data) ? bta : pc + 4;
+                BNE:     next_pc = (rs1_data != rs2_data) ? bta : pc + 4;
+                BLT:     next_pc = ($signed(rs1_data) < $signed(rs2_data))  ? bta : pc + 4;
+                BGE:     next_pc = ($signed(rs1_data) >= $signed(rs2_data)) ? bta : pc + 4;
+                BLTU:    next_pc = (rs1_data < rs2_data)  ? bta : pc + 4;
+                BGEU:    next_pc = (rs1_data >= rs2_data) ? bta : pc + 4;
+                default: next_pc = 32'b0;
+            endcase
+        end
     end
 endmodule
