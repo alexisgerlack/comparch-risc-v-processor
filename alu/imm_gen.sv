@@ -1,4 +1,4 @@
-module imm_u(
+module imm_gen(
     input logic  [31:0] instruction,
     input logic  [2:0]  imm_struct,
     output logic [31:0] imm

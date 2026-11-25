@@ -9,7 +9,9 @@ module decode(
     output logic reg_write, mem_read, mem_write,
     //passthrough
     output logic [2:0] funct3,
-    output logic [4:0] rd_address
+    output logic [4:0] rd_address,
+    //illegal boolean
+    output logic illegal
 );
     //case constants for alu operations
     localparam logic [3:0] ALU_ADD  = 4'd0;
@@ -32,83 +34,32 @@ module decode(
 
     //i type
     //opcode for load
-    localparam logic [6:0] LOAD =   7'b0000011;
+    localparam logic [6:0] LOAD   = 7'b0000011;
     //opcode for immediates
-    localparam logic [6:0] OP_IMM =  7'b0010011;
+    localparam logic [6:0] OP_IMM = 7'b0010011;
     //opcode for JALR
-    localparam logic [6:0] JALR = 7'b1100111;
-    //funct3 for load
-    localparam logic [2:0] LB      = 3'b000; //load byte
-    localparam logic [2:0] LH      = 3'b001; //load half word
-    localparam logic [2:0] LW      = 3'b010; //load word
-    localparam logic [2:0] LBU     = 3'b100; //load byte unsigned
-    localparam logic [2:0] LHU     = 3'b101; //load half-word unsigned
-    //funct3 for immediates
-    localparam logic [2:0] ADDI    = 3'b000; //add immediate
-    localparam logic [2:0] SLLI    = 3'b001; //shift left logical immediate
-    localparam logic [2:0] SLTI    = 3'b010; ///shift less than immediate
-    localparam logic [2:0] SLTIU   = 3'b011; //shift less than unsigned immediate
-    localparam logic [2:0] XORI    = 3'b100; //xor immediate
-    localparam logic [2:0] SRXI    = 3'b101; //look at funct 7 to determine SRLI or SRAI
-    localparam logic [2:0] ORI     = 3'b110; //or immediate
-    localparam logic [2:0] ANDI    = 3'b111; // and immediate
-
+    localparam logic [6:0] JALR   = 7'b1100111;
     //u type
-    localparam logic [6:0] AUIPC = 7'b0010111;
-    localparam logic [6:0] LUI   = 7'b0110111;
-
+    localparam logic [6:0] AUIPC  = 7'b0010111;
+    localparam logic [6:0] LUI    = 7'b0110111;
     //s-type
-    localparam logic [6:0] STORE =     7'b0100011;
-    //funct3 options
-    localparam logic [2:0] SB =    3'b000;
-    localparam logic [2:0] SH =    3'b001;
-    localparam logic [2:0] SW =    3'b010;
-
+    localparam logic [6:0] STORE  = 7'b0100011;
     //j-type
-    localparam logic [6:0] JAL = 7'b1101111;
-
+    localparam logic [6:0] JAL    = 7'b1101111;
     //b-type
-    localparam logic [6:0] BRANCH      = 7'b1100011;
-    //funct3
-    localparam logic [2:0] BEQ    = 3'b000;
-    localparam logic [2:0] BNE    = 3'b001;
-    localparam logic [2:0] BLT    = 3'b100;
-    localparam logic [2:0] BGE    = 3'b101;
-    localparam logic [2:0] BLTU   = 3'b110;
-    localparam logic [2:0] BGEU   = 3'b111;
-
+    localparam logic [6:0] BRANCH = 7'b1100011;
     //r-type
-    localparam logic [6:0] R       = 7'b0110011;
+    localparam logic [6:0] R      = 7'b0110011;
 
     //booleans for the first and second operand
     localparam logic [1:0] A_RS1  = 2'd0, A_PC   = 2'd1, A_ZERO = 2'd2;
-    localparam logic [1:0] B_RS2  = 2'd0, B_IMM  = 2'd1, A_FOUR = 2'd2;
+    localparam logic [1:0] B_RS2  = 2'd0, B_IMM  = 2'd1, B_FOUR = 2'd2;
     localparam logic [1:0] WB_ALU = 2'd0, WB_MEM = 2'd1, WB_PC4 = 2'd2;
-
-    logic is_i;
-    logic is_load;
-    logic is_lui;
-    logic is_auipc;
-    logic is_store;
-    logic is_jal;
-    logic is_jalr;
-    logic is_branch;
-    logic is_r;
 
     logic [6:0] opcode;
     logic [2:0] funct3;
     logic funct7;
     logic [3:0] r_op, i_op;
-
-    assign is_i = (opcode == OP_IMM);
-    assign is_load = (opcode == LOAD);
-    assign is_lui = (opcode == LUI);
-    assign is_auipc = (opcode == AUIPC);
-    assign is_store = (opcode == STORE);
-    assign is_jal = (opcode == JAL);
-    assign is_jalr = (opcode == JALR);
-    assign is_branch = (opcode == BRACH);
-    assign is_r = (opcode == R);
 
     assign opcode = instruction[6:0];
     assign funct3 = instruction[14:12];
@@ -125,7 +76,7 @@ module decode(
             3'b100: r_op = ALU_XOR;
             3'b101: r_op = funct7 ? ALU_SRA : ALU_SRL;
             3'b110: r_op = ALU_OR;
-            3'b110: r_op = ALU_AND;
+            3'b111: r_op = ALU_AND;
             default: r_op = ALU_ADD;
         endcase
     end
@@ -135,4 +86,42 @@ module decode(
         if (funct3 == 3'b000) i_op = ALU_ADD;   // ADDI
     end
 
+    always_comb begin
+        //setting defaults
+        is_i = 0; is_load = 0; is_lui = 0; is_auipc = 0; is_store = 0;
+        is_jal = 0; is_jalr = 0; is_branch = 0; is_r = 0;
+        imm_sel = IMM_I; alu_op = ALU_ADD; a_sel = A_RS1; b_sel = B_IMM; wb_sel = WB_ALU;
+        reg_write = 0; mem_read = 0; mem_write = 0;
+
+        case(opcode)
+            OP_IMM: begin
+                is_i = 1; alu_op = i_op; reg_write = 1; //the default a and b are correct for this one
+            end
+            LOAD: begin
+                is_load = 1; mem_read = 1; reg_write = 1; wb_sel = WB_MEM; //default a+b
+            end
+            LUI: begin
+                is_lui = 1; a_sel = A_ZERO; imm_sel = IMM_U; reg_write = 1;
+            end
+            AUIPC: begin
+                is_auipc = 1; reg_write = 1; a_sel = A_PC; imm_sel = IMM_U;
+            end
+            STORE: begin
+                is_store = 1; mem_write = 1; a_sel = A_RS1; imm_sel = IMM_S;
+            end
+            JAL: begin
+                is_jal = 1; reg_write = 1; wb_sel = WB_PC4; a_sel = A_PC; imm_sel = IMM_J;
+            end
+            JALR: begin
+                is_jalr = 1; reg_write = 1; wb_sel = WB_PC4;// default a + b
+            end
+            BRANCH: begin
+                is_branch = 1; imm_sel = IMM_B; b_sel = B_RS2; //default a
+            end
+            R: begin
+                is_r = 1; alu_op = r_op; reg_write = 1; b_sel = B_RS2; //default a
+            end
+            default: illegal = 1;
+        endcase
+    end
 endmodule
