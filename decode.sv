@@ -86,7 +86,6 @@ module decode(
     localparam logic [1:0] WB_ALU = 2'd0, WB_MEM = 2'd1, WB_PC4 = 2'd2;
 
     logic [6:0] opcode;
-    logic [2:0] funct3;
     logic funct7;
     logic [3:0] r_op, i_op;
 
@@ -120,14 +119,15 @@ module decode(
         is_i = 0; is_load = 0; is_lui = 0; is_auipc = 0; is_store = 0;
         is_jal = 0; is_jalr = 0; is_branch = 0; is_r = 0;
         imm_sel = IMM_I; alu_op = ALU_ADD; a_sel = A_RS1; b_sel = B_IMM; wb_sel = WB_ALU;
-        reg_write = 0; mem_read = 0; mem_write = 0;
+        reg_write = 0; mem_write = 0;
+        illegal = 0;
 
         case(opcode)
             OP_IMM: begin
                 is_i = 1; alu_op = i_op; reg_write = 1; //the default a and b are correct for this one
             end
             LOAD: begin
-                is_load = 1; mem_read = 1; reg_write = 1; wb_sel = WB_MEM; //default a+b
+                is_load = 1; reg_write = 1; wb_sel = WB_MEM; //default a+b
             end
             LUI: begin
                 is_lui = 1; a_sel = A_ZERO; imm_sel = IMM_U; reg_write = 1;
