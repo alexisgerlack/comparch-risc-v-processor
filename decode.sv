@@ -1,17 +1,46 @@
 module decode(
     input  logic [31:0] instruction,
-    //operation boolean
     output  logic is_r, is_i, is_load, is_store, is_branch, is_jal, is_jalr, is_lui, is_auipc,
-    //controls
     output logic [3:0] alu_op,
     output logic [2:0] imm_sel,
-    output logic [1:0] a_sel, b_sel, wb_sel,
-    output logic reg_write, mem_read, mem_write,
-    //passthrough
+    output logic [1:0] a_sel, b_sel,
+    output logic [1:0] wb_sel,
+    output logic reg_write, mem_write,
     output logic [2:0] funct3,
     output logic [4:0] rd_address,
-    //illegal boolean
     output logic illegal
+    /*
+    decode is a stateless module. It takes an instruction and outputs all neccessary information to perform the function instructed.
+    After computing this we should not need to access the instruction again
+    Input:
+        instruction - 32-bit number retreived from memory.
+    Outputs:
+        TYPE BOOLEANS
+        is_r - single bit value telling us if the instruction is R-type
+        is_i - single bit value telling us if the instruction is I-type
+        is_load - single bit value telling us if the instruction is a load/all I type except JALR
+        is_store - single bit value telling us if the instruction is S-type
+        is_branch - single bit value telling us if the instruction is B-type
+        is_jal - single bit value telling us if the instruction is J-type
+        is_jalr - single bit value telling us if the instruction is jalr
+        is_lui - single bit value telling us if the instruction is lui
+        is_auipc - single bit value telling us if the instruction is auipc
+        CONTROLS
+        alu_op - 4-bit number that tells us what basic function we will be performing using the alu. This is not the opcode. It is shared only with the decode and the alu
+        INPUTS
+        imm_sel - 3-bit number that tells us our immediate's structure/type
+        a_sel - 2-bit number that tells us what our first operand is. either RS1, PC, or zero
+        b_sel - 2-bit number that tells us what our first operand is. either RS2, immediate, or four
+        wb_sel - 2-bit number write-back select. this tells us what value we are writing to the register(rd) at the end of an instruction
+        FLAGS
+        reg_write - single bit flag that tells us if we are writing back to the register(rd). this is used for everything except stores and branches
+        mem_write - single bit flag that tells us if we are storing to memory
+        PASSTHROUGHS
+        funct3 - 3-bit number telling details of what instruction is being performed. retrieved directly from instruction
+        rd_address - 5-bit number that gives the address of the register we are writing the result to. retrived directly from instruction
+        ILLEGAL
+        illegal - single bit value telling us if the instruction is valid.
+    */
 );
     //case constants for alu operations
     localparam logic [3:0] ALU_ADD  = 4'd0;
