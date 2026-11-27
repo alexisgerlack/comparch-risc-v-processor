@@ -1,26 +1,19 @@
-`include "memory.sv"
+logic [4:0]  rs1_addr, rs2_addr;
+logic [31:0] read_data1, read_data2;
+logic [31:0] write_data;
+logic reg_write_en;
 
-module top (
-    input logic clk,
-    output logic LED,
-    output logic RGB_R,
-    output logic RGB_G,
-    output logic RGB_B
+assign rs1_addr = instruction[19:15];
+assign rs2_addr = instruction[24:20];
+assign reg_write_en = 1'b0;
+
+regfile regfile_inst (
+    .clk (clk),
+    .rs1 (rs1_addr),
+    .rs2 (rs2_addr),
+    .rd (rd_address),
+    .write_data (write_data),
+    .write_en (reg_write_en),
+    .read_data1 (read_data1),
+    .read_data2 (read_data2)
 );
-    //cycle cases
-    localparam [1:0] FETCH         = 2'b00;
-    localparam [1:0] EXECUTE       = 2'b01;
-    localparam [1:0] STORE         = 2'b11;
-
-    //initializing clk
-    localparam [3:0] CLK_PER_CYCLE = 4'b1111;
-    
-
-
-
-    always_ff @(posedge clk)begin
-        if 
-    end
-
-
-endmodule
